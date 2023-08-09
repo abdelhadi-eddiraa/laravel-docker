@@ -1,0 +1,57 @@
+version: 3;
+
+
+networks:
+  laravel:
+
+
+
+services:
+#port 8088 on mymachin compare to 80 on docker
+#volume in the src folder lock for file var/www/html
+  #nginx
+  nginx:
+    image: nginx:stable-alpine
+    container_name: nginx
+    ports:
+      - "8088:80"
+    volumes:
+      - ./src:/var/www/html
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - mysql
+      - php
+
+    networks:
+      - laravel
+
+ #mysql
+  mysql:
+    image: mysql
+    container_name: myownsql
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "4306:3306"
+    volumes:
+      - ./mysql:/var/lib/mysql
+    environment:
+      MYSQL_DATABASE: home
+      MYSQL_USER: home
+      MYSQL_PASSWORD: secret
+
+    networks:
+      - laravel
+
+  #php is hard for that we need to use build insted of image
+  php:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: php
+    volumes:
+      - ./src:var/www/html
+    ports:
+      - "9000:9000"
+    networks:
+      - laravel
